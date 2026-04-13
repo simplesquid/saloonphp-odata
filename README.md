@@ -52,7 +52,41 @@ Requires PHP 8.4+ and Saloon v4.
 
 ### As a Request trait
 
-The trait exposes `$request->odataQuery()` returning the underlying `ODataQueryBuilder`. The builder's params are merged into the request's query string immediately before send via Saloon middleware. If the builder is never touched and no class-level attributes apply, no middleware runs.
+```php
+use Saloon\Enums\Method;
+use Saloon\Http\Request;
+use SimpleSquid\SaloonOData\Concerns\HasODataQuery;
+use SimpleSquid\SaloonOData\Filter\FilterBuilder;
+
+class GetPeople extends Request
+{
+    use HasODataQuery;
+
+    protected Method $method = Method::GET;
+
+    public function resolveEndpoint(): string
+    {
+        return '/People';
+    }
+}
+
+$request = new GetPeople;
+
+$request->odataQuery()
+    ->select('FirstName', 'LastName', 'Email')
+    ->filter(fn (FilterBuilder $f) => $f
+        ->whereEquals('Status', 'Active')
+        ->and()
+        ->where('Age', 'gt', 30))
+    ->orderByDesc('CreatedAt')
+    ->top(25)
+    ->count();
+
+$response = $connector->send($request);
+// GET /People?$select=FirstName,LastName,Email&$filter=Status eq 'Active' and Age gt 30&$orderby=CreatedAt desc&$top=25&$count=true
+```
+
+The trait exposes `$request->odataQuery()` returning the underlying `ODataQueryBuilder`. The builder's params are merged into the request's query string immediately before send via Saloon middleware — you never call `->toArray()` yourself. If the builder is never touched and no class-level attributes apply, no middleware runs.
 
 ### As a standalone builder (e.g. inside `defaultQuery()`)
 
