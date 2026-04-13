@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SimpleSquid\SaloonOData\Tests\Fixtures;
 
-use SimpleSquid\SaloonOData\Attributes\ODataVersion;
-use SimpleSquid\SaloonOData\Enums\ODataVersion as VersionEnum;
+use SimpleSquid\SaloonOData\Attributes\UsesODataVersion;
+use SimpleSquid\SaloonOData\Enums\ODataVersion;
 
-#[ODataVersion(VersionEnum::V3)]
+#[UsesODataVersion(ODataVersion::V3)]
 class V3Connector extends TestConnector {}

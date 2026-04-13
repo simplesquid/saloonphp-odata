@@ -20,14 +20,20 @@ use UnitEnum;
  */
 final class Literal
 {
-    private const GUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
-
     /**
-     * Wrap a value to indicate date-only literal rendering.
+     * Wrap a value as a date-only literal.
      */
     public static function dateOnly(DateTimeInterface $value): DateOnly
     {
         return new DateOnly($value);
+    }
+
+    /**
+     * Wrap a string as a GUID literal. Validates the format eagerly.
+     */
+    public static function guid(string $value): Guid
+    {
+        return new Guid($value);
     }
 
     /**
@@ -46,13 +52,14 @@ final class Literal
             is_bool($value) => $value ? 'true' : 'false',
             is_int($value) => (string) $value,
             is_float($value) => self::encodeFloat($value),
+            $value instanceof Guid => self::encodeGuid($value->value, $version),
             $value instanceof DateOnly => self::encodeDateOnly($value->value, $version),
             $value instanceof DateTimeInterface => self::encodeDateTime($value, $version),
             $value instanceof BackedEnum => self::encode($value->value, $version),
             $value instanceof UnitEnum => self::encodeString($value->name),
             is_array($value) => self::encodeCollection($value, $version),
-            is_string($value) => self::encodeString($value, $version),
-            $value instanceof Stringable => self::encodeString((string) $value, $version),
+            is_string($value) => self::encodeString($value),
+            $value instanceof Stringable => self::encodeString((string) $value),
             default => throw new InvalidODataQueryException(sprintf(
                 'Cannot encode value of type "%s" as an OData literal.',
                 get_debug_type($value),
@@ -82,17 +89,14 @@ final class Literal
         return rtrim(rtrim(sprintf('%.14F', $value), '0'), '.');
     }
 
-    private static function encodeString(string $value, ODataVersion $version = ODataVersion::V4): string
+    private static function encodeString(string $value): string
     {
-        if ($version === ODataVersion::V3 && self::looksLikeGuid($value)) {
-            return "guid'{$value}'";
-        }
-
-        if ($version === ODataVersion::V4 && self::looksLikeGuid($value)) {
-            return $value;
-        }
-
         return "'".str_replace("'", "''", $value)."'";
+    }
+
+    private static function encodeGuid(string $value, ODataVersion $version): string
+    {
+        return $version === ODataVersion::V3 ? "guid'{$value}'" : $value;
     }
 
     private static function encodeDateTime(DateTimeInterface $value, ODataVersion $version): string
@@ -120,10 +124,5 @@ final class Literal
             : DateTimeImmutable::createFromInterface($value);
 
         return $immutable->setTimezone(new DateTimeZone('UTC'));
-    }
-
-    private static function looksLikeGuid(string $value): bool
-    {
-        return (bool) preg_match(self::GUID_PATTERN, $value);
     }
 }

@@ -17,6 +17,12 @@ it('passes custom non-system params through verbatim', function (): void {
     ]);
 });
 
-it('refuses $-prefixed keys via param() to protect system options', function (): void {
-    ODataQueryBuilder::make()->param('$select', 'Name');
-})->throws(InvalidODataQueryException::class);
+it('refuses $-prefixed keys via param() and names the right method', function (): void {
+    try {
+        ODataQueryBuilder::make()->param('$select', 'Name');
+        $this->fail('Expected exception');
+    } catch (InvalidODataQueryException $e) {
+        expect($e->getMessage())->toContain('$select')
+            ->and($e->getMessage())->toContain('select()');
+    }
+});

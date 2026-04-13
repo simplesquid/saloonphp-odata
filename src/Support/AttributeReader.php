@@ -7,7 +7,7 @@ namespace SimpleSquid\SaloonOData\Support;
 use ReflectionClass;
 use SimpleSquid\SaloonOData\Attributes\DefaultODataQuery;
 use SimpleSquid\SaloonOData\Attributes\ODataEntity;
-use SimpleSquid\SaloonOData\Attributes\ODataVersion as ODataVersionAttribute;
+use SimpleSquid\SaloonOData\Attributes\UsesODataVersion;
 use SimpleSquid\SaloonOData\Enums\ODataVersion;
 use SimpleSquid\SaloonOData\ODataQueryBuilder;
 
@@ -36,7 +36,7 @@ final class AttributeReader
             return self::$versions[$class];
         }
 
-        $attribute = self::firstAttribute($target, ODataVersionAttribute::class);
+        $attribute = self::firstAttribute($target, UsesODataVersion::class);
 
         return self::$versions[$class] = $attribute?->version;
     }
@@ -106,6 +106,10 @@ final class AttributeReader
 
         if ($defaults->format !== null) {
             $builder->format($defaults->format);
+        }
+
+        if ($defaults->filterRaw !== null && $defaults->filterRaw !== '') {
+            $builder->filterRaw($defaults->filterRaw);
         }
 
         foreach ($defaults->params as $key => $value) {

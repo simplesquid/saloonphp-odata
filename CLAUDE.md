@@ -22,8 +22,8 @@ src/
   Expand/ExpandBuilder.php       closure target for ->expand() (v4 only)
   Order/OrderByClause.php        readonly value object
   Enums/                         ODataVersion, ComparisonOperator, LogicalOperator, SortDirection
-  Attributes/                    ODataVersion, ODataEntity, DefaultODataQuery
-  Support/                       Literal (version-aware encoder), DateOnly, SkipToken, AttributeReader
+  Attributes/                    UsesODataVersion, ODataEntity, DefaultODataQuery
+  Support/                       Literal (version-aware encoder), DateOnly, Guid, PropertyName, SkipToken, AttributeReader
   Pagination/ODataPaginator.php  Saloon Paginator: walks @odata.nextLink / __next / d.__next
   Exceptions/                    InvalidODataQueryException, UnsupportedInVersionException
 tests/
@@ -39,8 +39,11 @@ tests/
 - Final classes by default. Builders are `final`; readonly value objects use `final readonly`.
 - Operators always accept `string|Enum` at the public boundary; coerce via `Enum::coerce()` and validate. Unknown strings throw `InvalidODataQueryException`.
 - All literal encoding goes through `Support\Literal::encode($value, $version)`. Never inline. Version-awareness lives there.
-- Version resolution order: explicit `make($v)` > `#[ODataVersion]` on Request (or parent) > `#[ODataVersion]` on Connector > default V4. The connector fallback works because filters and nested `$expand` are rendered lazily at `toArray()` time, so `withVersion()` from the trait at boot still produces correct rendering. `filterRaw()` content is the only version-baked thing — caller's responsibility.
-- Validation of v3-incompatible operators (`in`, `has`, nested expand closures) defers to render time. This keeps the version-switch story consistent. Trade-off: errors surface at send time, not at definition time.
+- Version resolution order: explicit `make($v)` > `#[UsesODataVersion]` on Request (or parent) > `#[UsesODataVersion]` on Connector > default V4. The connector fallback works because filters and nested `$expand` are rendered lazily at `toArray()` time, so `withVersion()` from the trait at boot still produces correct rendering. `filterRaw()` content is the only version-baked thing — caller's responsibility.
+- Validation of v3-incompatible operators (`in`, `has`, nested expand closures, `$search`) defers to render time. This keeps the version-switch story consistent. Trade-off: errors surface at send time, not at definition time.
+- Property names go through `Support\PropertyName::assert()` everywhere they enter the OData expression. Don't bypass — it's a security boundary.
+- `Literal::guid()` is opt-in. Never auto-detect GUIDs from raw strings — that's a type-confusion vector.
+- `HasODataQuery::bootHasODataQuery` is a no-op when `$this->odataQuery === null` and no class-level attributes apply. Don't call `$this->odataQuery()` in the boot path until that check has passed.
 - Use `public private(set)` for fluent state that should be readable but only mutated internally (see `ODataQueryBuilder::$version`).
 - `#[\Override]` on every method that overrides or implements an interface method.
 - `AttributeReader` caches reflection results in static maps keyed by class name. Tests must call `AttributeReader::flush()` in `beforeEach` if they exercise multiple fixtures with overlapping classes.

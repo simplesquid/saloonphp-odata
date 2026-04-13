@@ -10,6 +10,7 @@ use SimpleSquid\SaloonOData\Enums\ODataVersion;
 use SimpleSquid\SaloonOData\Exceptions\InvalidODataQueryException;
 use SimpleSquid\SaloonOData\Exceptions\UnsupportedInVersionException;
 use SimpleSquid\SaloonOData\Support\Literal;
+use SimpleSquid\SaloonOData\Support\PropertyName;
 
 /**
  * Closure-target for ODataQueryBuilder::filter().
@@ -40,6 +41,8 @@ final class FilterBuilder
      */
     public function where(string $property, ComparisonOperator|string $operator, mixed $value): self
     {
+        PropertyName::assert($property);
+
         $op = ComparisonOperator::coerce($operator);
         $op->assertSupported($this->version);
 
@@ -61,6 +64,23 @@ final class FilterBuilder
             $op->value,
             Literal::encode($value, $this->version),
         ));
+    }
+
+    /**
+     * Shorthand for `->where($property, ComparisonOperator::Eq, $value)` —
+     * by far the most common comparison.
+     */
+    public function whereEquals(string $property, mixed $value): self
+    {
+        return $this->where($property, ComparisonOperator::Eq, $value);
+    }
+
+    /**
+     * Shorthand for `->where($property, ComparisonOperator::Ne, $value)`.
+     */
+    public function whereNotEquals(string $property, mixed $value): self
+    {
+        return $this->where($property, ComparisonOperator::Ne, $value);
     }
 
     public function and(): self
@@ -126,6 +146,7 @@ final class FilterBuilder
      */
     public function contains(string $property, string $value): self
     {
+        PropertyName::assert($property);
         $literal = Literal::encode($value, $this->version);
 
         $expression = $this->version === ODataVersion::V3
@@ -137,6 +158,8 @@ final class FilterBuilder
 
     public function startsWith(string $property, string $value): self
     {
+        PropertyName::assert($property);
+
         return $this->push(sprintf(
             'startswith(%s,%s)',
             $property,
@@ -146,6 +169,8 @@ final class FilterBuilder
 
     public function endsWith(string $property, string $value): self
     {
+        PropertyName::assert($property);
+
         return $this->push(sprintf(
             'endswith(%s,%s)',
             $property,
@@ -154,8 +179,11 @@ final class FilterBuilder
     }
 
     /**
-     * Append a raw, pre-encoded sub-expression. Caller is responsible for
-     * correctness of operators, quoting and version compatibility.
+     * Append a raw, pre-encoded sub-expression.
+     *
+     * @security Caller is fully responsible for the contents of `$expression`.
+     * The package does NOT escape, validate, or version-translate this string.
+     * Never pass untrusted input directly.
      */
     public function raw(string $expression): self
     {

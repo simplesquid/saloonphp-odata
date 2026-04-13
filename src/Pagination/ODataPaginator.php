@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace SimpleSquid\SaloonOData\Pagination;
 
+use Override;
 use Saloon\Http\Connector;
 use Saloon\Http\Request;
 use Saloon\Http\Response;
 use Saloon\PaginationPlugin\Paginator;
+use SimpleSquid\SaloonOData\Concerns\HasODataQuery;
 use SimpleSquid\SaloonOData\Enums\ODataVersion;
+use SimpleSquid\SaloonOData\ODataQueryBuilder;
+use SimpleSquid\SaloonOData\Support\AttributeReader;
 use SimpleSquid\SaloonOData\Support\SkipToken;
 
 /**
@@ -28,14 +32,44 @@ use SimpleSquid\SaloonOData\Support\SkipToken;
  */
 final class ODataPaginator extends Paginator
 {
+    public readonly ODataVersion $version;
+
+    /**
+     * Resolve the version from (in order):
+     *   - the explicit `$version` argument,
+     *   - a `#[UsesODataVersion]` attribute on the Request,
+     *   - a `#[UsesODataVersion]` attribute on the Connector,
+     *   - the existing `odataQuery()` builder version on the Request, if it
+     *     uses {@see HasODataQuery}
+     *     (this catches an explicit `->withVersion()` call),
+     *   - default v4.
+     */
     public function __construct(
         Connector $connector,
         Request $request,
-        public readonly ODataVersion $version = ODataVersion::V4,
+        ?ODataVersion $version = null,
     ) {
+        $this->version = $version
+            ?? AttributeReader::version($request)
+            ?? AttributeReader::version($connector)
+            ?? self::resolveVersionFromExistingBuilder($request)
+            ?? ODataVersion::V4;
+
         parent::__construct($connector, $request);
     }
 
+    private static function resolveVersionFromExistingBuilder(Request $request): ?ODataVersion
+    {
+        if (! method_exists($request, 'odataQuery')) {
+            return null;
+        }
+
+        $builder = $request->odataQuery();
+
+        return $builder instanceof ODataQueryBuilder ? $builder->version : null;
+    }
+
+    #[Override]
     protected function applyPagination(Request $request): Request
     {
         if ($this->currentResponse === null) {
@@ -51,6 +85,7 @@ final class ODataPaginator extends Paginator
         return $request;
     }
 
+    #[Override]
     protected function isLastPage(Response $response): bool
     {
         return self::extractToken($response, $this->version) === null;
@@ -59,6 +94,7 @@ final class ODataPaginator extends Paginator
     /**
      * @return array<int|string, mixed>
      */
+    #[Override]
     protected function getPageItems(Response $response, Request $request): array
     {
         $value = $response->json('value');

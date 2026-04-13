@@ -14,6 +14,7 @@ use SimpleSquid\SaloonOData\Exceptions\UnsupportedInVersionException;
 use SimpleSquid\SaloonOData\Expand\ExpandBuilder;
 use SimpleSquid\SaloonOData\Filter\FilterBuilder;
 use SimpleSquid\SaloonOData\Order\OrderByClause;
+use SimpleSquid\SaloonOData\Support\PropertyName;
 use Stringable;
 
 /**
@@ -88,8 +89,27 @@ final class ODataQueryBuilder implements Stringable
     public function select(string ...$properties): self
     {
         foreach ($properties as $property) {
+            PropertyName::assert($property);
             $this->select[] = $property;
         }
+
+        return $this;
+    }
+
+    /**
+     * Replace any existing $select with the given properties (including any
+     * inherited from {@see Attributes\DefaultODataQuery}).
+     */
+    public function replaceSelect(string ...$properties): self
+    {
+        $this->select = [];
+
+        return $this->select(...$properties);
+    }
+
+    public function clearSelect(): self
+    {
+        $this->select = [];
 
         return $this;
     }
@@ -105,12 +125,23 @@ final class ODataQueryBuilder implements Stringable
     }
 
     /**
-     * Append a raw, pre-encoded filter expression. Caller is responsible for
-     * version compatibility — the package will not re-render this fragment.
+     * Append a raw, pre-encoded filter expression.
+     *
+     * @security Caller is fully responsible for the contents of `$expression`.
+     * The package does NOT escape, validate, or re-render this string. Never
+     * pass untrusted input directly — build with {@see filter()} closures
+     * instead, which use the version-aware Literal encoder.
      */
     public function filterRaw(string $expression): self
     {
         $this->filterFragments[] = $expression;
+
+        return $this;
+    }
+
+    public function clearFilter(): self
+    {
+        $this->filterFragments = [];
 
         return $this;
     }
@@ -126,13 +157,22 @@ final class ODataQueryBuilder implements Stringable
      */
     public function expand(string $navigation, ?Closure $build = null): self
     {
+        PropertyName::assert($navigation);
         $this->expand[] = [$navigation, $build];
+
+        return $this;
+    }
+
+    public function clearExpand(): self
+    {
+        $this->expand = [];
 
         return $this;
     }
 
     public function orderBy(string $property, SortDirection|string $direction = SortDirection::Asc): self
     {
+        PropertyName::assert($property);
         $this->orderBy[] = new OrderByClause($property, SortDirection::coerce($direction));
 
         return $this;
@@ -141,6 +181,13 @@ final class ODataQueryBuilder implements Stringable
     public function orderByDesc(string $property): self
     {
         return $this->orderBy($property, SortDirection::Desc);
+    }
+
+    public function clearOrderBy(): self
+    {
+        $this->orderBy = [];
+
+        return $this;
     }
 
     public function top(int $top): self
@@ -180,14 +227,12 @@ final class ODataQueryBuilder implements Stringable
     }
 
     /**
-     * @throws UnsupportedInVersionException
+     * Set the $search system option. Only valid in OData v4 — the version
+     * check defers to render time so a late {@see withVersion()} call from
+     * the trait can still flip a v4 builder to v3.
      */
     public function search(string $term): self
     {
-        if ($this->version === ODataVersion::V3) {
-            throw new UnsupportedInVersionException('$search is not available in OData v3.');
-        }
-
         $this->search = $term;
 
         return $this;
@@ -203,9 +248,13 @@ final class ODataQueryBuilder implements Stringable
     public function param(string $key, string|int|float|bool $value): self
     {
         if (str_starts_with($key, '$')) {
-            throw new InvalidODataQueryException(
-                'Use the dedicated builder method for system query options ($-prefixed keys).',
-            );
+            throw new InvalidODataQueryException(sprintf(
+                'Cannot use param() for the system query option "%s". Use the dedicated method instead: '.
+                '$select → select(), $filter → filter()/filterRaw(), $expand → expand(), $orderby → orderBy(), '.
+                '$top/$skip/$skiptoken → top()/skip()/skipToken(), $count/$inlinecount → count(), '.
+                '$search → search(), $format → format().',
+                $key,
+            ));
         }
 
         $this->params[$key] = $value;
@@ -263,6 +312,9 @@ final class ODataQueryBuilder implements Stringable
         }
 
         if ($this->search !== null) {
+            if ($this->version === ODataVersion::V3) {
+                throw new UnsupportedInVersionException('$search is not available in OData v3.');
+            }
             $params['$search'] = $this->search;
         }
 
@@ -285,6 +337,7 @@ final class ODataQueryBuilder implements Stringable
         return http_build_query($this->toArray(), '', '&', PHP_QUERY_RFC3986);
     }
 
+    #[\Override]
     public function __toString(): string
     {
         return $this->toQueryString();

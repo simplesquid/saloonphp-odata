@@ -6,10 +6,10 @@ namespace SimpleSquid\SaloonOData\Tests\Fixtures;
 
 use SimpleSquid\SaloonOData\Attributes\DefaultODataQuery;
 use SimpleSquid\SaloonOData\Attributes\ODataEntity;
-use SimpleSquid\SaloonOData\Attributes\ODataVersion;
-use SimpleSquid\SaloonOData\Enums\ODataVersion as VersionEnum;
+use SimpleSquid\SaloonOData\Attributes\UsesODataVersion;
+use SimpleSquid\SaloonOData\Enums\ODataVersion;
 
-#[ODataVersion(VersionEnum::V3)]
+#[UsesODataVersion(ODataVersion::V3)]
 #[ODataEntity('SalesInvoices')]
 #[DefaultODataQuery(
     select: ['ID', 'InvoiceDate', 'AmountDC'],

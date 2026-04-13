@@ -31,12 +31,37 @@ it('converts non-UTC DateTimes to UTC', function (): void {
     expect(Literal::encode($dt, ODataVersion::V4))->toBe('2025-01-15T10:30:00Z');
 });
 
-it('emits a bare GUID literal in v4 when a string matches the GUID pattern', function (): void {
-    expect(Literal::encode('11111111-2222-3333-4444-555555555555', ODataVersion::V4))
+it('emits a bare GUID literal in v4 when wrapped via Literal::guid()', function (): void {
+    expect(Literal::encode(Literal::guid('11111111-2222-3333-4444-555555555555'), ODataVersion::V4))
         ->toBe('11111111-2222-3333-4444-555555555555');
+});
+
+it('treats a GUID-shaped string as a plain quoted string by default', function (): void {
+    expect(Literal::encode('11111111-2222-3333-4444-555555555555', ODataVersion::V4))
+        ->toBe("'11111111-2222-3333-4444-555555555555'");
 });
 
 it('encodes an array as a tuple via encodeCollection', function (): void {
     expect(Literal::encodeCollection(['A', 'B', 1], ODataVersion::V4))
         ->toBe("('A','B',1)");
+});
+
+enum LiteralStatus: string
+{
+    case Active = 'Active';
+    case Pending = 'Pending';
+}
+
+enum LiteralPriority
+{
+    case High;
+    case Low;
+}
+
+it('encodes a backed enum as its scalar value', function (): void {
+    expect(Literal::encode(LiteralStatus::Active, ODataVersion::V4))->toBe("'Active'");
+});
+
+it('encodes a unit enum as its case name (quoted)', function (): void {
+    expect(Literal::encode(LiteralPriority::High, ODataVersion::V4))->toBe("'High'");
 });

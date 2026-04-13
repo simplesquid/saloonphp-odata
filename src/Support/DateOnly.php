@@ -13,4 +13,9 @@ use DateTimeInterface;
 final readonly class DateOnly
 {
     public function __construct(public DateTimeInterface $value) {}
+
+    public static function from(DateTimeInterface $value): self
+    {
+        return new self($value);
+    }
 }

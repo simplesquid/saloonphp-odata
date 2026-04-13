@@ -56,6 +56,17 @@ trait HasODataQuery
 
     public function bootHasODataQuery(PendingRequest $pendingRequest): void
     {
+        // Skip if the user never touched the builder and no class-level
+        // attributes drive defaults — there's nothing to merge.
+        if (
+            $this->odataQuery === null
+            && AttributeReader::defaults($this) === null
+            && AttributeReader::version($this) === null
+            && AttributeReader::version($pendingRequest->getConnector()) === null
+        ) {
+            return;
+        }
+
         $builder = $this->odataQuery();
 
         // Connector-level fallback: only when the Request itself is silent.

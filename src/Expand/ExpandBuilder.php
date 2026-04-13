@@ -7,8 +7,10 @@ namespace SimpleSquid\SaloonOData\Expand;
 use Closure;
 use SimpleSquid\SaloonOData\Enums\ODataVersion;
 use SimpleSquid\SaloonOData\Enums\SortDirection;
+use SimpleSquid\SaloonOData\Exceptions\InvalidODataQueryException;
 use SimpleSquid\SaloonOData\Exceptions\UnsupportedInVersionException;
 use SimpleSquid\SaloonOData\Filter\FilterBuilder;
+use SimpleSquid\SaloonOData\Support\PropertyName;
 
 /**
  * Closure-target for ODataQueryBuilder::expand().
@@ -49,6 +51,7 @@ final class ExpandBuilder
     public function select(string ...$properties): self
     {
         foreach ($properties as $property) {
+            PropertyName::assert($property);
             $this->select[] = $property;
         }
 
@@ -57,6 +60,7 @@ final class ExpandBuilder
 
     public function expand(string $navigation): self
     {
+        PropertyName::assert($navigation);
         $this->expand[] = $navigation;
 
         return $this;
@@ -77,13 +81,23 @@ final class ExpandBuilder
 
     public function orderBy(string $property, SortDirection|string $direction = SortDirection::Asc): self
     {
+        PropertyName::assert($property);
         $this->orderBy[] = $property.' '.SortDirection::coerce($direction)->value;
 
         return $this;
     }
 
+    public function orderByDesc(string $property): self
+    {
+        return $this->orderBy($property, SortDirection::Desc);
+    }
+
     public function top(int $top): self
     {
+        if ($top < 0) {
+            throw new InvalidODataQueryException('$top must be non-negative.');
+        }
+
         $this->top = $top;
 
         return $this;
@@ -91,6 +105,10 @@ final class ExpandBuilder
 
     public function skip(int $skip): self
     {
+        if ($skip < 0) {
+            throw new InvalidODataQueryException('$skip must be non-negative.');
+        }
+
         $this->skip = $skip;
 
         return $this;

@@ -23,7 +23,7 @@
     ],
     "require": {
         "php": "^8.4",
-        "saloonphp/saloon": "^3.0"
+        "saloonphp/saloon": "^4.0"
     },
     "require-dev": {
         "laravel/pint": "^1.18",
@@ -55,10 +55,6 @@
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
         },
-        "audit": {
-            "abandoned": "ignore",
-            "ignore": ["PKSA-xnj5-w74d-6wmz", "PKSA-rnpm-45mg-w6ht", "PKSA-5szq-gvrg-ttfq"]
-        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

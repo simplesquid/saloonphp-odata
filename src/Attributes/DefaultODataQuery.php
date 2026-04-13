@@ -24,6 +24,7 @@ final readonly class DefaultODataQuery
         public bool $count = false,
         public ?string $search = null,
         public ?string $format = null,
+        public ?string $filterRaw = null,
         public array $params = [],
     ) {}
 }
