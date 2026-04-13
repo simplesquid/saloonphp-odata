@@ -1,0 +1,65 @@
+{
+    "name": "simplesquid/saloonphp-odata",
+    "description": "A Saloon plugin providing a fluent, version-aware (v3 + v4) OData query builder and server-driven paginator.",
+    "keywords": [
+        "simplesquid",
+        "saloon",
+        "saloonphp",
+        "odata",
+        "odata-v3",
+        "odata-v4",
+        "query-builder",
+        "exact-online"
+    ],
+    "homepage": "https://github.com/simplesquid/saloonphp-odata",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Matthew Poulter",
+            "email": "matthew.poulter@simplesquid.co.za",
+            "homepage": "https://simplesquid.co.za/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "saloonphp/saloon": "^3.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.18",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-arch": "^3.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.0",
+        "saloonphp/pagination-plugin": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "SimpleSquid\\SaloonOData\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SimpleSquid\\SaloonOData\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        },
+        "audit": {
+            "abandoned": "ignore",
+            "ignore": ["PKSA-xnj5-w74d-6wmz", "PKSA-rnpm-45mg-w6ht", "PKSA-5szq-gvrg-ttfq"]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

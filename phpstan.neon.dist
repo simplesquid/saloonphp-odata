@@ -1,0 +1,9 @@
+parameters:
+    level: 10
+    paths:
+        - src
+        - tests
+    excludePaths:
+        # Pest's arch() fluent API isn't statically describable.
+        - tests/ArchTest.php
+    treatPhpDocTypesAsCertain: false
