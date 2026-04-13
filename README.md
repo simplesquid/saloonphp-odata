@@ -1,5 +1,10 @@
 # saloonphp-odata
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/simplesquid/saloonphp-odata.svg?style=flat-square)](https://packagist.org/packages/simplesquid/saloonphp-odata)
+[![Tests](https://img.shields.io/github/actions/workflow/status/simplesquid/saloonphp-odata/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/simplesquid/saloonphp-odata/actions/workflows/run-tests.yml)
+[![PHPStan](https://img.shields.io/github/actions/workflow/status/simplesquid/saloonphp-odata/phpstan.yml?branch=main&label=phpstan&style=flat-square)](https://github.com/simplesquid/saloonphp-odata/actions/workflows/phpstan.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/simplesquid/saloonphp-odata.svg?style=flat-square)](https://packagist.org/packages/simplesquid/saloonphp-odata)
+
 A [Saloon](https://github.com/saloonphp/saloon) plugin providing a fluent, version-aware OData query builder and a server-driven paginator. Supports OData v3 and v4. Bring your own Connector — Saloon handles HTTP.
 
 ```php
