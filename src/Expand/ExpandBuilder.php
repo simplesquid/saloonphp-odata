@@ -36,7 +36,8 @@ final class ExpandBuilder
 
     private ?bool $count = null;
 
-    private ?string $filter = null;
+    /** @var Closure(FilterBuilder): mixed|null */
+    private ?Closure $filter = null;
 
     public function __construct(public readonly ODataVersion $version)
     {
@@ -71,10 +72,7 @@ final class ExpandBuilder
      */
     public function filter(Closure $build): self
     {
-        $filter = new FilterBuilder($this->version);
-        $build($filter);
-
-        $this->filter = $filter->render();
+        $this->filter = $build;
 
         return $this;
     }
@@ -132,8 +130,13 @@ final class ExpandBuilder
         if ($this->select !== []) {
             $parts[] = '$select='.implode(',', $this->select);
         }
-        if ($this->filter !== null && $this->filter !== '') {
-            $parts[] = '$filter='.$this->filter;
+        if ($this->filter !== null) {
+            $filterBuilder = new FilterBuilder($this->version);
+            ($this->filter)($filterBuilder);
+            $rendered = $filterBuilder->render();
+            if ($rendered !== '') {
+                $parts[] = '$filter='.$rendered;
+            }
         }
         if ($this->orderBy !== []) {
             $parts[] = '$orderby='.implode(',', $this->orderBy);

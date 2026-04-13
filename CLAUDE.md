@@ -7,7 +7,7 @@ A Saloon PHP plugin providing a fluent, version-aware OData query-string builder
 ## Stack
 
 - PHP `^8.4` (uses asymmetric visibility, `#[\Override]`, readonly value objects)
-- Saloon v3
+- Saloon v4
 - Pest 3 (with arch plugin)
 - Laravel Pint
 - PHPStan level 10
@@ -21,7 +21,7 @@ src/
   Filter/FilterBuilder.php       closure target for ->filter()
   Expand/ExpandBuilder.php       closure target for ->expand() (v4 only)
   Order/OrderByClause.php        readonly value object
-  Enums/                         ODataVersion, ComparisonOperator, LogicalOperator, SortDirection
+  Enums/                         ODataVersion, ComparisonOperator, SortDirection
   Attributes/                    UsesODataVersion, ODataEntity, DefaultODataQuery
   Support/                       Literal (version-aware encoder), DateOnly, Guid, PropertyName, SkipToken, AttributeReader
   Pagination/ODataPaginator.php  Saloon Paginator: walks @odata.nextLink / __next / d.__next

@@ -29,6 +29,12 @@ use SimpleSquid\SaloonOData\Support\SkipToken;
  * The paginator only parses spec-defined fields. Vendor extensions are out of
  * scope; a Request that needs to extract items differently can implement
  * Saloon's MapPaginatedResponseItems contract.
+ *
+ * Note: OData 4.01 also permits a short `nextLink` form (without the
+ * `@odata.` prefix) under minimal-metadata negotiation. This paginator looks
+ * only for the canonical `@odata.nextLink` form, which is what every
+ * mainstream OData v4 server (Microsoft Graph, Dynamics, SAP, Exact Online)
+ * emits in practice.
  */
 final class ODataPaginator extends Paginator
 {

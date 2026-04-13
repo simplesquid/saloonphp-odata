@@ -13,6 +13,9 @@ final readonly class DefaultODataQuery
      * @param  list<string>  $select
      * @param  list<string>  $expand
      * @param  array<string, 'asc'|'desc'>  $orderBy
+     * @param  bool  $count  Set to true to emit `$count=true` (v4) / `$inlinecount=allpages` (v3).
+     *                       false (the default) skips the parameter entirely; if you need to
+     *                       explicitly emit `$count=false`, call `->count(false)` on the builder.
      * @param  array<string, scalar>  $params
      */
     public function __construct(

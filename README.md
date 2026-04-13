@@ -94,7 +94,7 @@ class GetSalesInvoices extends Request
 }
 ```
 
-Defaults are applied on first access to `odataQuery()`. Runtime calls layer over them; use `clearSelect()` / `replaceSelect(...)` (and the equivalents for `Filter`, `OrderBy`, `Expand`) when you need to override rather than append.
+Defaults are applied on first access to `odataQuery()`. Runtime calls layer over them; use `clearSelect()` / `replaceSelect()` / `clearFilter()` / `replaceFilter()` / `clearOrderBy()` / `replaceOrderBy()` / `clearExpand()` / `replaceExpand()` when you need to override rather than append.
 
 The version is resolved in this order:
 1. Explicit `ODataQueryBuilder::make($version)` call.

@@ -147,6 +147,16 @@ final class ODataQueryBuilder implements Stringable
     }
 
     /**
+     * Discard any existing filter fragments, then apply the given closure.
+     *
+     * @param  Closure(FilterBuilder): mixed  $build
+     */
+    public function replaceFilter(Closure $build): self
+    {
+        return $this->clearFilter()->filter($build);
+    }
+
+    /**
      * Add a navigation property to $expand.
      *
      * Pass a closure to use OData v4 nested options (`Trips($select=Name)`).
@@ -170,6 +180,14 @@ final class ODataQueryBuilder implements Stringable
         return $this;
     }
 
+    /**
+     * Discard any existing $expand entries, then add the given navigation.
+     */
+    public function replaceExpand(string $navigation, ?Closure $build = null): self
+    {
+        return $this->clearExpand()->expand($navigation, $build);
+    }
+
     public function orderBy(string $property, SortDirection|string $direction = SortDirection::Asc): self
     {
         PropertyName::assert($property);
@@ -188,6 +206,14 @@ final class ODataQueryBuilder implements Stringable
         $this->orderBy = [];
 
         return $this;
+    }
+
+    /**
+     * Discard any existing $orderby clauses, then add the given one.
+     */
+    public function replaceOrderBy(string $property, SortDirection|string $direction = SortDirection::Asc): self
+    {
+        return $this->clearOrderBy()->orderBy($property, $direction);
     }
 
     public function top(int $top): self

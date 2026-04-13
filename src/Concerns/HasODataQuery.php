@@ -14,11 +14,11 @@ use SimpleSquid\SaloonOData\Support\AttributeReader;
  * Add OData query-building to a Saloon Request.
  *
  * On first access, lazily creates an {@see ODataQueryBuilder} using the
- * version from `#[ODataVersion]` on the Request (or any parent), falling
+ * version from `#[UsesODataVersion]` on the Request (or any parent), falling
  * back to v4. Any `#[DefaultODataQuery]` on the Request is applied.
  *
  * At boot, if the Request didn't declare a version, the Connector's
- * `#[ODataVersion]` attribute is consulted and applied via `withVersion()`.
+ * `#[UsesODataVersion]` attribute is consulted and applied via `withVersion()`.
  * Filters and nested $expand are rendered lazily, so the late switch is
  * applied consistently to all chained calls. (Pre-encoded `filterRaw()`
  * fragments are version-baked by the caller.)
