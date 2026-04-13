@@ -44,5 +44,6 @@ it('allows flat v3 expand using path syntax', function (): void {
 
 it('throws when a closure is passed to expand on a v3 builder', function (): void {
     ODataQueryBuilder::make(ODataVersion::V3)
-        ->expand('Trips', fn (ExpandBuilder $e) => $e->select('Name'));
+        ->expand('Trips', fn (ExpandBuilder $e) => $e->select('Name'))
+        ->toArray();
 })->throws(UnsupportedInVersionException::class);

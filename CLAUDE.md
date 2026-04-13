@@ -39,7 +39,8 @@ tests/
 - Final classes by default. Builders are `final`; readonly value objects use `final readonly`.
 - Operators always accept `string|Enum` at the public boundary; coerce via `Enum::coerce()` and validate. Unknown strings throw `InvalidODataQueryException`.
 - All literal encoding goes through `Support\Literal::encode($value, $version)`. Never inline. Version-awareness lives there.
-- Version resolution order: explicit `make($v)` > `#[ODataVersion]` on Request (or parent) > default V4. The connector is not consulted — by the time `bootHasODataQuery` runs, the user has already chained version-divergent calls on the builder, so a late version switch would render inconsistently.
+- Version resolution order: explicit `make($v)` > `#[ODataVersion]` on Request (or parent) > `#[ODataVersion]` on Connector > default V4. The connector fallback works because filters and nested `$expand` are rendered lazily at `toArray()` time, so `withVersion()` from the trait at boot still produces correct rendering. `filterRaw()` content is the only version-baked thing — caller's responsibility.
+- Validation of v3-incompatible operators (`in`, `has`, nested expand closures) defers to render time. This keeps the version-switch story consistent. Trade-off: errors surface at send time, not at definition time.
 - Use `public private(set)` for fluent state that should be readable but only mutated internally (see `ODataQueryBuilder::$version`).
 - `#[\Override]` on every method that overrides or implements an interface method.
 - `AttributeReader` caches reflection results in static maps keyed by class name. Tests must call `AttributeReader::flush()` in `beforeEach` if they exercise multiple fixtures with overlapping classes.

@@ -28,9 +28,9 @@ it('accepts the comparison operator as either an enum or a string', function ():
 });
 
 it('rejects an unknown string operator', function (): void {
-    ODataQueryBuilder::make()->filter(
-        fn (FilterBuilder $f) => $f->where('Age', 'between', 30),
-    );
+    ODataQueryBuilder::make()
+        ->filter(fn (FilterBuilder $f) => $f->where('Age', 'between', 30))
+        ->toArray();
 })->throws(InvalidODataQueryException::class);
 
 it('joins consecutive clauses with `and` by default', function (): void {
@@ -95,9 +95,9 @@ it('escapes embedded apostrophes in string literals', function (): void {
 });
 
 it('refuses to start with a logical joiner', function (): void {
-    ODataQueryBuilder::make()->filter(
-        fn (FilterBuilder $f) => $f->and()->where('Age', 'gt', 30),
-    );
+    ODataQueryBuilder::make()
+        ->filter(fn (FilterBuilder $f) => $f->and()->where('Age', 'gt', 30))
+        ->toArray();
 })->throws(InvalidODataQueryException::class);
 
 it('AND-merges multiple ->filter() calls', function (): void {

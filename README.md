@@ -106,9 +106,10 @@ Defaults are applied on first access to `odataQuery()`. Runtime calls layer over
 The version is resolved in this order:
 1. Explicit `ODataQueryBuilder::make($version)` call.
 2. `#[ODataVersion]` on the Request class (or any parent).
-3. Default: v4.
+3. `#[ODataVersion]` on the Connector class (applied at request boot).
+4. Default: v4.
 
-> The version is read at the time the builder is first constructed, so version-divergent rendering (filters, literals, expand) stays consistent. Put `#[ODataVersion]` on a shared base Request if every Request in a connector is the same version.
+> Filters and nested `$expand` are rendered lazily, so a connector-level version still applies cleanly even after the user has chained `->filter(...)` on the builder. The exception is `filterRaw()` — those strings are version-baked by the caller.
 
 ## Builder reference
 

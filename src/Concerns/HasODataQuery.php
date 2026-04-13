@@ -13,13 +13,18 @@ use SimpleSquid\SaloonOData\Support\AttributeReader;
 /**
  * Add OData query-building to a Saloon Request.
  *
- * On first access, lazily creates an {@see ODataQueryBuilder}. The version is
- * read from a `#[ODataVersion]` attribute on the Request class (or any of
- * its parents); falls back to OData v4. Any `#[DefaultODataQuery]` on the
- * Request is applied to the builder.
+ * On first access, lazily creates an {@see ODataQueryBuilder} using the
+ * version from `#[ODataVersion]` on the Request (or any parent), falling
+ * back to v4. Any `#[DefaultODataQuery]` on the Request is applied.
+ *
+ * At boot, if the Request didn't declare a version, the Connector's
+ * `#[ODataVersion]` attribute is consulted and applied via `withVersion()`.
+ * Filters and nested $expand are rendered lazily, so the late switch is
+ * applied consistently to all chained calls. (Pre-encoded `filterRaw()`
+ * fragments are version-baked by the caller.)
  *
  * Registers a request middleware that merges the builder's rendered params
- * into the PendingRequest's query bag immediately before the request is sent.
+ * into the PendingRequest's query bag immediately before send.
  */
 trait HasODataQuery
 {
@@ -52,6 +57,14 @@ trait HasODataQuery
     public function bootHasODataQuery(PendingRequest $pendingRequest): void
     {
         $builder = $this->odataQuery();
+
+        // Connector-level fallback: only when the Request itself is silent.
+        if (AttributeReader::version($this) === null) {
+            $connectorVersion = AttributeReader::version($pendingRequest->getConnector());
+            if ($connectorVersion !== null) {
+                $builder->withVersion($connectorVersion);
+            }
+        }
 
         $pendingRequest->middleware()->onRequest(
             static function (PendingRequest $request) use ($builder): void {

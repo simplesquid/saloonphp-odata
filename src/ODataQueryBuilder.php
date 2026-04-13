@@ -31,9 +31,17 @@ final class ODataQueryBuilder implements Stringable
     /** @var list<string> */
     private array $select = [];
 
-    private ?string $filter = null;
+    /**
+     * Filter fragments to AND together at render time. A closure is rendered
+     * against a fresh FilterBuilder using the *current* version, so a late
+     * version switch (via withVersion()) renders correctly. A string is a
+     * pre-encoded fragment from filterRaw() and is emitted as-is.
+     *
+     * @var list<string|Closure(FilterBuilder): mixed>
+     */
+    private array $filterFragments = [];
 
-    /** @var list<array{0: string, 1: ?ExpandBuilder}> */
+    /** @var list<array{0: string, 1: ?Closure(ExpandBuilder): mixed}> */
     private array $expand = [];
 
     /** @var list<OrderByClause> */
@@ -64,6 +72,19 @@ final class ODataQueryBuilder implements Stringable
         return new self($version);
     }
 
+    /**
+     * Late-bind the version. Useful for plugins that resolve the version from
+     * a Connector at request-boot time (after the user has already chained
+     * methods on the builder). Filters and nested $expand are rendered lazily,
+     * so a late switch is safe; only `filterRaw()` content is version-baked.
+     */
+    public function withVersion(ODataVersion $version): self
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
     public function select(string ...$properties): self
     {
         foreach ($properties as $property) {
@@ -78,26 +99,18 @@ final class ODataQueryBuilder implements Stringable
      */
     public function filter(Closure $build): self
     {
-        $filter = new FilterBuilder($this->version);
-        $build($filter);
-
-        $rendered = $filter->render();
-
-        $this->filter = $this->filter === null || $this->filter === ''
-            ? $rendered
-            : '('.$this->filter.') and ('.$rendered.')';
+        $this->filterFragments[] = $build;
 
         return $this;
     }
 
     /**
-     * Append a raw, pre-encoded filter expression.
+     * Append a raw, pre-encoded filter expression. Caller is responsible for
+     * version compatibility — the package will not re-render this fragment.
      */
     public function filterRaw(string $expression): self
     {
-        $this->filter = $this->filter === null || $this->filter === ''
-            ? $expression
-            : '('.$this->filter.') and ('.$expression.')';
+        $this->filterFragments[] = $expression;
 
         return $this;
     }
@@ -106,24 +119,14 @@ final class ODataQueryBuilder implements Stringable
      * Add a navigation property to $expand.
      *
      * Pass a closure to use OData v4 nested options (`Trips($select=Name)`).
-     * Calling with a closure on a v3 builder throws.
+     * Closure form throws {@see UnsupportedInVersionException} at render time
+     * if the builder is v3.
      *
      * @param  Closure(ExpandBuilder): mixed|null  $build
-     *
-     * @throws UnsupportedInVersionException
      */
     public function expand(string $navigation, ?Closure $build = null): self
     {
-        if ($build === null) {
-            $this->expand[] = [$navigation, null];
-
-            return $this;
-        }
-
-        $expand = new ExpandBuilder($this->version);
-        $build($expand);
-
-        $this->expand[] = [$navigation, $expand];
+        $this->expand[] = [$navigation, $build];
 
         return $this;
     }
@@ -223,8 +226,9 @@ final class ODataQueryBuilder implements Stringable
             $params['$select'] = implode(',', $this->select);
         }
 
-        if ($this->filter !== null && $this->filter !== '') {
-            $params['$filter'] = $this->filter;
+        $filter = $this->renderFilter();
+        if ($filter !== null) {
+            $params['$filter'] = $filter;
         }
 
         if ($this->expand !== []) {
@@ -307,18 +311,58 @@ final class ODataQueryBuilder implements Stringable
         return self::make($this->version);
     }
 
+    private function renderFilter(): ?string
+    {
+        if ($this->filterFragments === []) {
+            return null;
+        }
+
+        $parts = [];
+        foreach ($this->filterFragments as $fragment) {
+            if (is_string($fragment)) {
+                if ($fragment === '') {
+                    continue;
+                }
+                $parts[] = $fragment;
+
+                continue;
+            }
+
+            $builder = new FilterBuilder($this->version);
+            $fragment($builder);
+            $rendered = $builder->render();
+
+            if ($rendered !== '') {
+                $parts[] = $rendered;
+            }
+        }
+
+        if ($parts === []) {
+            return null;
+        }
+
+        if (count($parts) === 1) {
+            return $parts[0];
+        }
+
+        return '('.implode(') and (', $parts).')';
+    }
+
     private function renderExpand(): string
     {
         $parts = [];
 
-        foreach ($this->expand as [$navigation, $builder]) {
-            if ($builder === null) {
+        foreach ($this->expand as [$navigation, $build]) {
+            if ($build === null) {
                 $parts[] = $navigation;
 
                 continue;
             }
 
-            $inner = $builder->render();
+            $expand = new ExpandBuilder($this->version);
+            $build($expand);
+
+            $inner = $expand->render();
             $parts[] = $inner === null ? $navigation : "{$navigation}({$inner})";
         }
 

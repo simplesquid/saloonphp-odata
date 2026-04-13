@@ -8,13 +8,13 @@ use SimpleSquid\SaloonOData\Filter\FilterBuilder;
 use SimpleSquid\SaloonOData\ODataQueryBuilder;
 
 it('throws when the in operator is used on v3', function (): void {
-    ODataQueryBuilder::make(ODataVersion::V3)->filter(
-        fn (FilterBuilder $f) => $f->in('Status', ['A', 'B']),
-    );
+    ODataQueryBuilder::make(ODataVersion::V3)
+        ->filter(fn (FilterBuilder $f) => $f->in('Status', ['A', 'B']))
+        ->toArray();
 })->throws(UnsupportedInVersionException::class);
 
 it('throws when the has operator is used on v3', function (): void {
-    ODataQueryBuilder::make(ODataVersion::V3)->filter(
-        fn (FilterBuilder $f) => $f->has('Roles', 'Admin'),
-    );
+    ODataQueryBuilder::make(ODataVersion::V3)
+        ->filter(fn (FilterBuilder $f) => $f->has('Roles', 'Admin'))
+        ->toArray();
 })->throws(UnsupportedInVersionException::class);
