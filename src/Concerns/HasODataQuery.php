@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SimpleSquid\SaloonOData\Concerns;
 
-use Saloon\Enums\PipeOrder;
 use Saloon\Http\PendingRequest;
 use SimpleSquid\SaloonOData\Enums\ODataVersion;
 use SimpleSquid\SaloonOData\ODataQueryBuilder;
@@ -23,8 +22,9 @@ use SimpleSquid\SaloonOData\Support\AttributeReader;
  * applied consistently to all chained calls. (Pre-encoded `filterRaw()`
  * fragments are version-baked by the caller.)
  *
- * Registers a request middleware that merges the builder's rendered params
- * into the PendingRequest's query bag immediately before send.
+ * The rendered query params are merged directly into the PendingRequest's
+ * query bag at boot time, ensuring they are available before Saloon's
+ * mock-resolution middleware runs.
  */
 trait HasODataQuery
 {
@@ -77,12 +77,6 @@ trait HasODataQuery
             }
         }
 
-        $pendingRequest->middleware()->onRequest(
-            static function (PendingRequest $request) use ($builder): void {
-                $request->query()->merge($builder->toArray());
-            },
-            'odata-merge-query',
-            PipeOrder::LAST,
-        );
+        $pendingRequest->query()->merge($builder->toArray());
     }
 }
