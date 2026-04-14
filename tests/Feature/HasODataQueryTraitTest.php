@@ -34,6 +34,20 @@ it('merges the built query into the sent request', function (): void {
     ]);
 });
 
+it('lets user query params override OData builder params for the same key', function (): void {
+    $mock = new MockClient([MockResponse::make([])]);
+    $connector = new TestConnector;
+    $connector->withMockClient($mock);
+
+    $request = new TestRequest;
+    $request->odataQuery()->top(10);
+    $request->query()->add('$top', '5');
+
+    $connector->send($request);
+
+    expect($mock->getLastPendingRequest()?->query()->get('$top'))->toBe('5');
+});
+
 it('does not override params explicitly added by the user', function (): void {
     $mock = new MockClient([MockResponse::make([])]);
     $connector = new TestConnector;

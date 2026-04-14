@@ -7,7 +7,7 @@ use Saloon\Http\Faking\MockResponse;
 use SimpleSquid\SaloonOData\Tests\Fixtures\TestConnector;
 use SimpleSquid\SaloonOData\Tests\Fixtures\TestRequest;
 
-it('does not register middleware when no OData params and no attributes apply', function (): void {
+it('does not merge query params when no OData params and no attributes apply', function (): void {
     $mock = new MockClient([MockResponse::make([])]);
     $connector = new TestConnector;
     $connector->withMockClient($mock);
